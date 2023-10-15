@@ -1,0 +1,48 @@
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: strip-auth-prefix
+spec:
+  stripPrefix:
+    prefixes:
+      - /auth
+
+---
+
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: auth
+spec:
+  forwardAuth:
+    address: http://otus-auth-service:8000/auth
+    authResponseHeaders:
+      - x-auth-user
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: default-routes
+spec:
+  routes:
+    - kind: Rule
+      match: PathPrefix(`/auth`)
+      services:
+        - name: otus-auth-service
+          namespace: default
+          port: 8000
+      middlewares:
+        - name: strip-auth-prefix
+          namespace: default
+    - kind: Rule
+      match: PathPrefix(`/`)
+      priority: 1
+      services:
+        - name: otus-profile-service
+          namespace: default
+          port: 8000
+      middlewares:
+        - name: auth
+          namespace: default

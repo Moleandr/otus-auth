@@ -1,0 +1,39 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+actor User
+participant "Api gateway"
+participant "Auth service"
+participant "Profile service"
+
+group Регистрация
+User -> "Api gateway" : POST /auth/registration {"login", "password"}
+
+"Api gateway" -> "Auth service" : POST /registration {"login", "password"}
+
+User <- "Auth service" : 200: {'success': True}
+end
+
+group Вход
+User -> "Api gateway" : POST /auth/login {"login", "password"}
+
+"Api gateway" -> "Auth service" : POST /login {"login", "password"}
+
+User <- "Auth service" : 200
+end
+
+group Получение данных
+User -> "Api gateway" : GET /users/:login
+
+"Api gateway" -> "Auth service" : GET /auth
+
+"Api gateway" <- "Auth service" : 200 HEADER: x-auth-user: login
+
+"Api gateway" -> "Profile service":  GET /users/:login HEADER: x-auth-user: login
+
+"User" <- "Profile service": {"email": "test@mail.com", "phone": "89999999999"}
+end
+
+
+
+@enduml
